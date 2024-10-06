@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/Paris Example.unity
+    guid: c092aa0c9be677349addf987bd7897b2
+  m_configObjects:
+    Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 1481f18d317a41b4f89dd1d0bd4d5534,
+      type: 2}
+    com.unity.xr.management.loader_settings: {fileID: 11400000, guid: dbab979422efcbf47aaa2bc0e193cced,
+      type: 2}
