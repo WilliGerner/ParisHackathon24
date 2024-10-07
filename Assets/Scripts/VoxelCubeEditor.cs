@@ -22,5 +22,20 @@ public class VoxelCubeEditor : Editor
         {
             voxelCubeScript.ClearVoxelCube();
         }
+
+        // Add a button in the Inspector to manually save the voxel cube
+        if (GUILayout.Button("Save Voxel Cube"))
+        {
+            voxelCubeScript.SaveVoxelCube();
+            Debug.Log("Voxel Cube saved via Editor.");
+        }
+
+        // Optionally, you can add a button to load the voxel cube
+        if (GUILayout.Button("Load Voxel Cube"))
+        {
+            voxelCubeScript.LoadVoxelCube();
+            Debug.Log("Voxel Cube loaded via Editor.");
+        }
     }
+
 }

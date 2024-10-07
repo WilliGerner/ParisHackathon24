@@ -8,6 +8,9 @@ TagManager:
   - Tree
   - Water
   - Human
+  - Swamp
+  - City
+  - Mountain
   layers:
   - Default
   - TransparentFX
