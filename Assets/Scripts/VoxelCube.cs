@@ -4,36 +4,50 @@ using UnityEngine;
 
 public class VoxelCube : MonoBehaviour
 {
+    public Transform earthCore;
     [Header("Voxel Cube Settings")]
-    public int diameter = 5; // Durchmesser des VoxelCubes
-    public GameObject voxelPrefab; // Das Prefab für den Voxel
-    public GameObject humanPrefab; // Das Prefab für den Voxel
-    public GameObject treePrefab;  // Prefab für Baumwürfel
-    public Transform cubePosition; // Die Position, an der der Cube erstellt wird (Mittelpunkt des Planeten)
+    public int diameter = 5; // Diameter of the VoxelCube
+    public GameObject voxelPrefab; // Prefab for general voxel
+    public GameObject humanPrefab; // Prefab for the human
+    public GameObject treePrefab;  // Prefab for the tree
+    public GameObject mountainPrefab; // Prefab for the mountain
+    public GameObject swampPrefab; // Prefab for the swamp
+    public GameObject cityPrefab; // Prefab for the city
+    public Transform cubePosition; // Position where the voxel cube is created (center of the planet)
 
     [Header("Material Settings")]
-    public Material outerLayerMaterial;  // Material für die äußerste Schicht (z.B. Erde, braun)
-    public Material middleLayerMaterial; // Material für die mittlere Schicht (z.B. Stein, grau)
-    public Material waterMaterial;       // Material für Wasser (ersetzt Blöcke)
-    public Material treeMaterial;        // Material für Bäume (grün)
-    public Material humanMaterial;       // Material für den Menschen (schwarz)
+    public Material outerLayerMaterial;
+    public Material middleLayerMaterial;
+    public Material waterMaterial;
+    public Material treeMaterial;
+    public Material humanMaterial;
+    public Material mountainMaterial;
+    public Material swampMaterial;
+    public Material cityMaterial;
 
     [Header("Spawning Settings")]
-    public float humanSpawnInterval = 10f; // Zeit in Sekunden, nach der ein neuer Mensch gespawnt wird
-    public float treeGrowthInterval = 5f;  // Zeit in Sekunden, nach der ein Baum um einen Block wächst
+    public float humanSpawnInterval = 10f;
 
+    // Lists to store all objects in the scene
     public List<GameObject> createdVoxels = new List<GameObject>();
-    public List<GameObject> humans = new List<GameObject>(); // Liste aller Menschen
-    public List<GameObject> trees = new List<GameObject>();  // Liste aller Bäume
-    public List<GameObject> water = new List<GameObject>();  // Liste aller Bäume
+    public List<GameObject> humans = new List<GameObject>();
+    public List<GameObject> trees = new List<GameObject>();
+    public List<GameObject> water = new List<GameObject>();
+    public List<GameObject> mountains = new List<GameObject>();
+    public List<GameObject> swamps = new List<GameObject>();
+    public List<GameObject> cities = new List<GameObject>();
 
     private float nextHumanSpawnTime;
-    // Function to place tree and start growth
-    // Define a parent for all trees
+
+    // Parent transforms to organize objects
     public Transform treeParent;
     public Transform humanParent;
     public Transform waterParent;
     public Transform voxelCubeParent;
+    public Transform mountainParent;
+    public Transform swampParent;
+    public Transform cityParent;
+
     private void Start()
     {
         // Load saved voxel cube if any exists
@@ -47,7 +61,6 @@ public class VoxelCube : MonoBehaviour
             GenerateVoxelCube();
         }
 
-        // Set the next human spawn time
         nextHumanSpawnTime = Time.time + humanSpawnInterval;
 
         if (createdVoxels.Count == 0 && voxelCubeParent != null)
@@ -61,35 +74,20 @@ public class VoxelCube : MonoBehaviour
         SaveVoxelCube();
     }
 
-
     private void PopulateCreatedVoxelsFromParent()
     {
-        Debug.Log("Populating createdVoxels from voxelCubeParent.");
-
         foreach (Transform child in voxelCubeParent)
         {
-            // Only add the voxel child objects tagged as "Voxel"
             if (child.CompareTag("Voxel"))
             {
                 createdVoxels.Add(child.gameObject);
-                Debug.Log("Added voxel at position: " + child.position);
             }
-        }
-
-        if (createdVoxels.Count == 0)
-        {
-            Debug.LogWarning("No voxels found in voxelCubeParent.");
-        }
-        else
-        {
-            Debug.Log("Successfully populated createdVoxels with " + createdVoxels.Count + " voxels.");
         }
     }
 
-    // Remove GrowTrees() from Update, and call it only once when placing the tree
     private void Update()
     {
-        // Human spawning logic remains the same
+        // Human spawning logic
         if (Time.time >= nextHumanSpawnTime)
         {
             SpawnHuman();
@@ -121,22 +119,60 @@ public class VoxelCube : MonoBehaviour
                 }
             }
         }
+
+        // Press 'M' to place mountain
+        if (Input.GetKeyDown(KeyCode.M))
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            {
+                if (hit.transform.CompareTag("Voxel"))
+                {
+                    PlaceMountain(hit.transform.gameObject);
+                }
+            }
+        }
+
+        // Press 'S' to place swamp
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            {
+                if (hit.transform.CompareTag("Voxel"))
+                {
+                    PlaceSwamp(hit.transform.gameObject);
+                }
+            }
+        }
+
+        // Press 'C' to place city
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            RaycastHit hit;
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            {
+                if (hit.transform.CompareTag("Voxel"))
+                {
+                    PlaceCity(hit.transform.gameObject);
+                }
+            }
+        }
     }
 
-    // Funktion, um den VoxelCube zu generieren (unverändert)
     public void GenerateVoxelCube()
     {
-        ClearVoxelCube();
+        ClearVoxelCube(); // Clear old data before generating new
 
         if (voxelPrefab == null || cubePosition == null)
         {
-            Debug.LogError("Bitte stelle sicher, dass das VoxelPrefab und die Position gesetzt sind.");
+            Debug.LogError("Please make sure VoxelPrefab and Position are set.");
             return;
         }
 
-        float radius = diameter / 2f; // Berechne den Radius der Kugel
-        Vector3 center = new Vector3(radius, radius, radius); // Der Mittelpunkt der Kugel
-        float outerLayerThickness = radius * 0.33f; // Dicke der äußeren Schichten
+        float radius = diameter / 2f; // Calculate the radius of the cube
+        Vector3 center = new Vector3(radius, radius, radius);
+        float outerLayerThickness = radius * 0.33f;
 
         for (int x = 0; x < diameter; x++)
         {
@@ -163,153 +199,180 @@ public class VoxelCube : MonoBehaviour
                             voxelRenderer.material = middleLayerMaterial;
                         }
 
-                        voxel.tag = "Voxel"; // Setze den Tag, damit wir ihn per Raycast identifizieren können
-
-                        createdVoxels.Add(voxel);
+                        voxel.tag = "Voxel"; // Set tag to voxel
+                        createdVoxels.Add(voxel); // Add to voxel list
                     }
                 }
             }
         }
     }
 
-  
-    // Wasser setzen (Voxel ersetzen)
     public void ReplaceWithWater(GameObject targetVoxel)
     {
         Renderer renderer = targetVoxel.GetComponent<Renderer>();
         if (renderer != null)
         {
             renderer.material = waterMaterial;
-            targetVoxel.tag = "Water"; // Ändere den Tag, damit Menschen nicht darüber gehen können
-            targetVoxel.name = "WaterCube";
+            targetVoxel.tag = "Water";
             targetVoxel.transform.parent = waterParent;
             createdVoxels.Remove(targetVoxel);
             water.Add(targetVoxel);
         }
     }
 
-    // Menschen spawnen (unverändert)
     public void SpawnHuman()
     {
-        Debug.Log("Try Spawn Human");
-        Vector3 spawnPosition = new Vector3(0, 0, 0);// FindValidOuterVoxel();  // We now search only the outermost voxels
+        Vector3 spawnPosition = new Vector3(0, 0, 0); // Adjust spawn position logic as needed
 
         if (spawnPosition != Vector3.zero)
         {
             GameObject human = Instantiate(humanPrefab, spawnPosition, Quaternion.identity, humanParent);
-
-            // Calculate the normal direction from the center of the planet to this position
-            Vector3 normalDirection = (spawnPosition - cubePosition.position).normalized;
-
-            // Align the human so that "up" is away from the planet's center
-            human.transform.rotation = Quaternion.FromToRotation(Vector3.up, normalDirection);
-
             human.tag = "Human";
             humans.Add(human);
-            Debug.Log("Spawned new Human at position: " + spawnPosition);
         }
         else
         {
-            Debug.LogWarning("No valid outer voxel found for Human.");
+            Debug.LogWarning("No valid voxel found for human spawn.");
         }
     }
-
-
-    // Function to check if a voxel is an outer voxel by checking if it has an empty adjacent space
-   
 
     public void PlaceTree(GameObject targetVoxel)
     {
-        // RaycastHit to get the surface normal
         RaycastHit hit;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
         {
-            // Get the tree spawn position from the voxel's position
-            Vector3 treePosition = targetVoxel.transform.position;
+            // Calculate the direction from the earth core to the hit point
+            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
 
-            // Align the tree's up direction with the surface normal (hit.normal)
-            Quaternion treeRotation = Quaternion.FromToRotation(Vector3.up, hit.normal);
+            // Position the tree slightly outward along the hit point's normal
+            Vector3 treePosition = hit.point + directionFromCore * 0.5f; // Offset outward by 0.5 units
 
-            // Check if the parent container for trees exists, if not, create it
-            if (treeParent == null)
-            {
-                GameObject parentObject = new GameObject("TreeParent");
-                treeParent = parentObject.transform;
-            }
+            // Snap position to the voxel grid
+            treePosition = new Vector3(Mathf.Round(treePosition.x), Mathf.Round(treePosition.y), Mathf.Round(treePosition.z));
 
-            // Instantiate the tree with the correct rotation and parent it to the treeParent
+            // Calculate the rotation based on the outward direction
+            Quaternion treeRotation = GetRotationFromDirection(directionFromCore);
+
             GameObject newTree = Instantiate(treePrefab, treePosition, treeRotation, treeParent);
             newTree.tag = "Tree";
-            trees.Add(newTree); // Add tree to the list
-
-            // Start tree growth coroutine just once for each tree
-            StartCoroutine(GrowTree(newTree, 1));
+            trees.Add(newTree);
         }
     }
 
-
-    private IEnumerator GrowTree(GameObject treeBase, int currentHeight)
+    public void PlaceMountain(GameObject targetVoxel)
     {
-        // Wait for the specified interval before growing
-        yield return new WaitForSeconds(treeGrowthInterval);
-
-        // Continue growing if the height is less than 3
-        if (currentHeight < 3)
+        RaycastHit hit;
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
         {
-            // Modify the scale of the tree (growth happens only in height, Y-axis)
-            Vector3 newScale = treeBase.transform.localScale;
-            newScale.y += 1.0f; // Increase height (y-axis) only
+            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
+            Vector3 mountainPosition = hit.point + directionFromCore * 0.5f; // Offset outward
 
-            // Apply the new scale to the tree base
-            treeBase.transform.localScale = newScale;
+            mountainPosition = new Vector3(Mathf.Round(mountainPosition.x), Mathf.Round(mountainPosition.y), Mathf.Round(mountainPosition.z));
 
-            // Adjust the tree's position so the base stays in place, but grows upward
-            treeBase.transform.position += treeBase.transform.up * 0.5f; // Move upward by half of the scale increase
+            Quaternion mountainRotation = GetRotationFromDirection(directionFromCore);
 
-            // Continue growing the tree to the next height
-            StartCoroutine(GrowTree(treeBase, currentHeight + 1));
+            GameObject newMountain = Instantiate(mountainPrefab, mountainPosition, mountainRotation, mountainParent);
+            newMountain.tag = "Mountain";
+            mountains.Add(newMountain);
         }
     }
+
+    public void PlaceSwamp(GameObject targetVoxel)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+        {
+            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
+            Vector3 swampPosition = hit.point + directionFromCore * 0.5f; // Offset outward
+
+            swampPosition = new Vector3(Mathf.Round(swampPosition.x), Mathf.Round(swampPosition.y), Mathf.Round(swampPosition.z));
+
+            Quaternion swampRotation = GetRotationFromDirection(directionFromCore);
+
+            GameObject newSwamp = Instantiate(swampPrefab, swampPosition, swampRotation, swampParent);
+            newSwamp.tag = "Swamp";
+            swamps.Add(newSwamp);
+        }
+    }
+
+    public void PlaceCity(GameObject targetVoxel)
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+        {
+            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
+            Vector3 cityPosition = hit.point + directionFromCore * 0.5f; // Offset outward
+
+            cityPosition = new Vector3(Mathf.Round(cityPosition.x), Mathf.Round(cityPosition.y), Mathf.Round(cityPosition.z));
+
+            Quaternion cityRotation = GetRotationFromDirection(directionFromCore);
+
+            GameObject newCity = Instantiate(cityPrefab, cityPosition, cityRotation, cityParent);
+            newCity.tag = "City";
+            cities.Add(newCity);
+        }
+    }
+
+    // This function calculates the correct rotation based on the direction from the Earth core
+    private Quaternion GetRotationFromDirection(Vector3 outwardDirection)
+    {
+        // We want the "up" direction of the object to point outward from the Earthcore
+        return Quaternion.LookRotation(Vector3.Cross(outwardDirection, Vector3.up), outwardDirection);
+    }
+
+    //private Vector3 SnapToWorldAxis(Vector3 direction)
+    //{
+    //    // Snap to the closest axis (up, down, left, right, forward, back)
+    //    Vector3 snapDirection = Vector3.zero;
+
+    //    // Check which world axis the outward direction is closest to
+    //    if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y) && Mathf.Abs(direction.x) > Mathf.Abs(direction.z))
+    //    {
+    //        snapDirection = (direction.x > 0) ? Vector3.right : Vector3.left;
+    //    }
+    //    else if (Mathf.Abs(direction.y) > Mathf.Abs(direction.x) && Mathf.Abs(direction.y) > Mathf.Abs(direction.z))
+    //    {
+    //        snapDirection = (direction.y > 0) ? Vector3.up : Vector3.down;
+    //    }
+    //    else
+    //    {
+    //        snapDirection = (direction.z > 0) ? Vector3.forward : Vector3.back;
+    //    }
+
+    //    return snapDirection;
+    //}
+
 
     public void SaveVoxelCube()
     {
-        PlayerPrefs.DeleteAll(); // Optional: Clear previous save data
+        PlayerPrefs.DeleteAll(); // Optional: clear old data
 
-        // Save voxel data
+        // Save voxels
         for (int i = 0; i < createdVoxels.Count; i++)
         {
             GameObject voxel = createdVoxels[i];
             string voxelKey = "Voxel_" + i;
             Vector3 voxelPos = voxel.transform.position;
 
-            // Save position
             PlayerPrefs.SetFloat(voxelKey + "_x", voxelPos.x);
             PlayerPrefs.SetFloat(voxelKey + "_y", voxelPos.y);
             PlayerPrefs.SetFloat(voxelKey + "_z", voxelPos.z);
-
-            // Save tag (Tree, Water, or normal Voxel)
             PlayerPrefs.SetString(voxelKey + "_tag", voxel.tag);
-
-            // If the voxel is a tree, save the tree's height
-            if (voxel.tag == "Tree")
-            {
-                float treeHeight = voxel.transform.localScale.y; // Assuming scale.y represents the height
-                PlayerPrefs.SetFloat(voxelKey + "_height", treeHeight);
-            }
         }
 
-        // Save humans (if required)
+        // Save humans
         for (int i = 0; i < humans.Count; i++)
         {
             GameObject human = humans[i];
             Vector3 humanPos = human.transform.position;
             string humanKey = "Human_" + i;
+
             PlayerPrefs.SetFloat(humanKey + "_x", humanPos.x);
             PlayerPrefs.SetFloat(humanKey + "_y", humanPos.y);
             PlayerPrefs.SetFloat(humanKey + "_z", humanPos.z);
         }
 
-        // Save water cubes under WaterParent
+        // Save water cubes
         for (int i = 0; i < water.Count; i++)
         {
             GameObject waterVoxel = water[i];
@@ -319,25 +382,42 @@ public class VoxelCube : MonoBehaviour
             PlayerPrefs.SetFloat(waterKey + "_x", waterPos.x);
             PlayerPrefs.SetFloat(waterKey + "_y", waterPos.y);
             PlayerPrefs.SetFloat(waterKey + "_z", waterPos.z);
-
-            PlayerPrefs.SetString(waterKey + "_tag", "Water");
         }
 
-        // Save trees under Trees parent
-        for (int i = 0; i < trees.Count; i++)
+        // Save mountains
+        for (int i = 0; i < mountains.Count; i++)
         {
-            GameObject tree = trees[i];
-            string treeKey = "Tree_" + i;
-            Vector3 treePos = tree.transform.position;
+            GameObject mountain = mountains[i];
+            string mountainKey = "Mountain_" + i;
+            Vector3 mountainPos = mountain.transform.position;
 
-            PlayerPrefs.SetFloat(treeKey + "_x", treePos.x);
-            PlayerPrefs.SetFloat(treeKey + "_y", treePos.y);
-            PlayerPrefs.SetFloat(treeKey + "_z", treePos.z);
+            PlayerPrefs.SetFloat(mountainKey + "_x", mountainPos.x);
+            PlayerPrefs.SetFloat(mountainKey + "_y", mountainPos.y);
+            PlayerPrefs.SetFloat(mountainKey + "_z", mountainPos.z);
+        }
 
-            float treeHeight = tree.transform.localScale.y; // Save tree height
-            PlayerPrefs.SetFloat(treeKey + "_height", treeHeight);
+        // Save swamps
+        for (int i = 0; i < swamps.Count; i++)
+        {
+            GameObject swamp = swamps[i];
+            string swampKey = "Swamp_" + i;
+            Vector3 swampPos = swamp.transform.position;
 
-            PlayerPrefs.SetString(treeKey + "_tag", "Tree");
+            PlayerPrefs.SetFloat(swampKey + "_x", swampPos.x);
+            PlayerPrefs.SetFloat(swampKey + "_y", swampPos.y);
+            PlayerPrefs.SetFloat(swampKey + "_z", swampPos.z);
+        }
+
+        // Save cities
+        for (int i = 0; i < cities.Count; i++)
+        {
+            GameObject city = cities[i];
+            string cityKey = "City_" + i;
+            Vector3 cityPos = city.transform.position;
+
+            PlayerPrefs.SetFloat(cityKey + "_x", cityPos.x);
+            PlayerPrefs.SetFloat(cityKey + "_y", cityPos.y);
+            PlayerPrefs.SetFloat(cityKey + "_z", cityPos.z);
         }
 
         // Save counts
@@ -345,18 +425,19 @@ public class VoxelCube : MonoBehaviour
         PlayerPrefs.SetInt("WaterCount", water.Count);
         PlayerPrefs.SetInt("TreeCount", trees.Count);
         PlayerPrefs.SetInt("HumanCount", humans.Count);
+        PlayerPrefs.SetInt("MountainCount", mountains.Count);
+        PlayerPrefs.SetInt("SwampCount", swamps.Count);
+        PlayerPrefs.SetInt("CityCount", cities.Count);
 
         PlayerPrefs.Save();
         Debug.Log("Voxel cube saved successfully.");
     }
 
-
-
     public void LoadVoxelCube()
     {
         ClearVoxelCube(); // Clear any existing voxels, humans, or trees
 
-        // Load voxel data
+        // Load voxels
         int voxelCount = PlayerPrefs.GetInt("VoxelCount", 0);
         for (int i = 0; i < voxelCount; i++)
         {
@@ -368,33 +449,31 @@ public class VoxelCube : MonoBehaviour
             );
             string tag = PlayerPrefs.GetString(voxelKey + "_tag");
 
-            // Instantiate voxel at saved position
             GameObject voxel = Instantiate(voxelPrefab, position, Quaternion.identity, voxelCubeParent);
             voxel.tag = tag;
 
-            // Set the correct material based on the tag
             Renderer renderer = voxel.GetComponent<Renderer>();
             if (tag == "Tree")
             {
-                // Assign tree material and load its height
                 renderer.material = treeMaterial;
-
-                // Restore the tree's height
-                float treeHeight = PlayerPrefs.GetFloat(voxelKey + "_height", 1);
-                voxel.transform.localScale = new Vector3(1, treeHeight, 1);
-                voxel.transform.parent = treeParent;  // Set parent to Trees
-                trees.Add(voxel);  // Add to trees list
+                voxel.transform.parent = treeParent;
+                trees.Add(voxel);
+            }
+            else if (tag == "Water")
+            {
+                renderer.material = waterMaterial;
+                voxel.transform.parent = waterParent;
+                water.Add(voxel);
             }
             else
             {
-                // Default voxel material for non-tree voxels
                 renderer.material = outerLayerMaterial;
             }
 
-            createdVoxels.Add(voxel); // Add to voxel list
+            createdVoxels.Add(voxel);
         }
 
-        // Load water cubes under WaterParent
+        // Load water cubes
         int waterCount = PlayerPrefs.GetInt("WaterCount", 0);
         for (int i = 0; i < waterCount; i++)
         {
@@ -405,59 +484,80 @@ public class VoxelCube : MonoBehaviour
                 PlayerPrefs.GetFloat(waterKey + "_z")
             );
 
-            // Instantiate water voxel
             GameObject waterVoxel = Instantiate(voxelPrefab, waterPos, Quaternion.identity, waterParent);
             waterVoxel.tag = "Water";
-
-            // Assign the water material
             Renderer renderer = waterVoxel.GetComponent<Renderer>();
             renderer.material = waterMaterial;
 
-            water.Add(waterVoxel);  // Add to water list
+            water.Add(waterVoxel);
         }
 
-        // Load trees under Trees parent
-        int treeCount = PlayerPrefs.GetInt("TreeCount", 0);
-        for (int i = 0; i < treeCount; i++)
-        {
-            string treeKey = "Tree_" + i;
-            Vector3 treePos = new Vector3(
-                PlayerPrefs.GetFloat(treeKey + "_x"),
-                PlayerPrefs.GetFloat(treeKey + "_y"),
-                PlayerPrefs.GetFloat(treeKey + "_z")
-            );
-
-            float treeHeight = PlayerPrefs.GetFloat(treeKey + "_height", 1);
-
-            // Instantiate tree at the saved position with correct height
-            GameObject tree = Instantiate(treePrefab, treePos, Quaternion.identity, treeParent);
-            tree.transform.localScale = new Vector3(1, treeHeight, 1);  // Restore tree height
-            tree.tag = "Tree";
-
-            trees.Add(tree);  // Add to trees list
-        }
-
-        // Load human data (if needed)
+        // Load humans
         int humanCount = PlayerPrefs.GetInt("HumanCount", 0);
         for (int i = 0; i < humanCount; i++)
         {
             string humanKey = "Human_" + i;
-            Vector3 position = new Vector3(
+            Vector3 humanPos = new Vector3(
                 PlayerPrefs.GetFloat(humanKey + "_x"),
                 PlayerPrefs.GetFloat(humanKey + "_y"),
                 PlayerPrefs.GetFloat(humanKey + "_z")
             );
-            GameObject human = Instantiate(humanPrefab, position, Quaternion.identity, humanParent);
+
+            GameObject human = Instantiate(humanPrefab, humanPos, Quaternion.identity, humanParent);
             humans.Add(human);
+        }
+
+        // Load mountains
+        int mountainCount = PlayerPrefs.GetInt("MountainCount", 0);
+        for (int i = 0; i < mountainCount; i++)
+        {
+            string mountainKey = "Mountain_" + i;
+            Vector3 mountainPos = new Vector3(
+                PlayerPrefs.GetFloat(mountainKey + "_x"),
+                PlayerPrefs.GetFloat(mountainKey + "_y"),
+                PlayerPrefs.GetFloat(mountainKey + "_z")
+            );
+
+            GameObject mountain = Instantiate(mountainPrefab, mountainPos, Quaternion.identity, mountainParent);
+            mountains.Add(mountain);
+        }
+
+        // Load swamps
+        int swampCount = PlayerPrefs.GetInt("SwampCount", 0);
+        for (int i = 0; i < swampCount; i++)
+        {
+            string swampKey = "Swamp_" + i;
+            Vector3 swampPos = new Vector3(
+                PlayerPrefs.GetFloat(swampKey + "_x"),
+                PlayerPrefs.GetFloat(swampKey + "_y"),
+                PlayerPrefs.GetFloat(swampKey + "_z")
+            );
+
+            GameObject swamp = Instantiate(swampPrefab, swampPos, Quaternion.identity, swampParent);
+            swamps.Add(swamp);
+        }
+
+        // Load cities
+        int cityCount = PlayerPrefs.GetInt("CityCount", 0);
+        for (int i = 0; i < cityCount; i++)
+        {
+            string cityKey = "City_" + i;
+            Vector3 cityPos = new Vector3(
+                PlayerPrefs.GetFloat(cityKey + "_x"),
+                PlayerPrefs.GetFloat(cityKey + "_y"),
+                PlayerPrefs.GetFloat(cityKey + "_z")
+            );
+
+            GameObject city = Instantiate(cityPrefab, cityPos, Quaternion.identity, cityParent);
+            cities.Add(city);
         }
 
         Debug.Log("Voxel cube loaded successfully.");
     }
 
-
     public void ClearVoxelCube()
     {
-        // Clear createdVoxels
+        // Clear created voxels
         foreach (GameObject voxel in createdVoxels)
         {
             if (voxel != null)
@@ -496,10 +596,35 @@ public class VoxelCube : MonoBehaviour
             }
         }
         water.Clear();
+
+        // Clear mountains
+        foreach (GameObject mountain in mountains)
+        {
+            if (mountain != null)
+            {
+                DestroyImmediate(mountain);
+            }
+        }
+        mountains.Clear();
+
+        // Clear swamps
+        foreach (GameObject swamp in swamps)
+        {
+            if (swamp != null)
+            {
+                DestroyImmediate(swamp);
+            }
+        }
+        swamps.Clear();
+
+        // Clear cities
+        foreach (GameObject city in cities)
+        {
+            if (city != null)
+            {
+                DestroyImmediate(city);
+            }
+        }
+        cities.Clear();
     }
-
-
 }
-
-
-
