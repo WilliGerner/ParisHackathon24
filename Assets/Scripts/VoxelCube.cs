@@ -7,6 +7,7 @@ public class VoxelCube : MonoBehaviour
     [Header("Voxel Cube Settings")]
     public int diameter = 5; // Durchmesser des VoxelCubes
     public GameObject voxelPrefab; // Das Prefab für den Voxel
+    public GameObject humanPrefab; // Das Prefab für den Voxel
     public GameObject treePrefab;  // Prefab für Baumwürfel
     public Transform cubePosition; // Die Position, an der der Cube erstellt wird (Mittelpunkt des Planeten)
 
@@ -21,16 +22,68 @@ public class VoxelCube : MonoBehaviour
     public float humanSpawnInterval = 10f; // Zeit in Sekunden, nach der ein neuer Mensch gespawnt wird
     public float treeGrowthInterval = 5f;  // Zeit in Sekunden, nach der ein Baum um einen Block wächst
 
-    private List<GameObject> createdVoxels = new List<GameObject>();
-    private List<GameObject> humans = new List<GameObject>(); // Liste aller Menschen
-    private List<GameObject> trees = new List<GameObject>();  // Liste aller Bäume
+    public List<GameObject> createdVoxels = new List<GameObject>();
+    public List<GameObject> humans = new List<GameObject>(); // Liste aller Menschen
+    public List<GameObject> trees = new List<GameObject>();  // Liste aller Bäume
+    public List<GameObject> water = new List<GameObject>();  // Liste aller Bäume
 
     private float nextHumanSpawnTime;
-
+    // Function to place tree and start growth
+    // Define a parent for all trees
+    public Transform treeParent;
+    public Transform humanParent;
+    public Transform waterParent;
+    public Transform voxelCubeParent;
     private void Start()
     {
-        // Setze den nächsten Spawn-Zeitpunkt für Menschen
+        // Load saved voxel cube if any exists
+        if (PlayerPrefs.HasKey("VoxelCount"))
+        {
+            LoadVoxelCube();
+        }
+        else
+        {
+            // Generate the voxel cube for the first time
+            GenerateVoxelCube();
+        }
+
+        // Set the next human spawn time
         nextHumanSpawnTime = Time.time + humanSpawnInterval;
+
+        if (createdVoxels.Count == 0 && voxelCubeParent != null)
+        {
+            PopulateCreatedVoxelsFromParent();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveVoxelCube();
+    }
+
+
+    private void PopulateCreatedVoxelsFromParent()
+    {
+        Debug.Log("Populating createdVoxels from voxelCubeParent.");
+
+        foreach (Transform child in voxelCubeParent)
+        {
+            // Only add the voxel child objects tagged as "Voxel"
+            if (child.CompareTag("Voxel"))
+            {
+                createdVoxels.Add(child.gameObject);
+                Debug.Log("Added voxel at position: " + child.position);
+            }
+        }
+
+        if (createdVoxels.Count == 0)
+        {
+            Debug.LogWarning("No voxels found in voxelCubeParent.");
+        }
+        else
+        {
+            Debug.Log("Successfully populated createdVoxels with " + createdVoxels.Count + " voxels.");
+        }
     }
 
     // Remove GrowTrees() from Update, and call it only once when placing the tree
@@ -97,7 +150,7 @@ public class VoxelCube : MonoBehaviour
                     if (distanceFromCenter >= radius - outerLayerThickness && distanceFromCenter <= radius)
                     {
                         Vector3 position = cubePosition.position + new Vector3(x, y, z);
-                        GameObject voxel = Instantiate(voxelPrefab, position, Quaternion.identity, cubePosition);
+                        GameObject voxel = Instantiate(voxelPrefab, position, Quaternion.identity, voxelCubeParent);
 
                         Renderer voxelRenderer = voxel.GetComponent<Renderer>();
 
@@ -119,8 +172,7 @@ public class VoxelCube : MonoBehaviour
         }
     }
 
-   
-
+  
     // Wasser setzen (Voxel ersetzen)
     public void ReplaceWithWater(GameObject targetVoxel)
     {
@@ -129,40 +181,42 @@ public class VoxelCube : MonoBehaviour
         {
             renderer.material = waterMaterial;
             targetVoxel.tag = "Water"; // Ändere den Tag, damit Menschen nicht darüber gehen können
+            targetVoxel.name = "WaterCube";
+            targetVoxel.transform.parent = waterParent;
+            createdVoxels.Remove(targetVoxel);
+            water.Add(targetVoxel);
         }
     }
 
     // Menschen spawnen (unverändert)
     public void SpawnHuman()
     {
-        Vector3 spawnPosition = FindValidSpawnPosition();
+        Debug.Log("Try Spawn Human");
+        Vector3 spawnPosition = new Vector3(0, 0, 0);// FindValidOuterVoxel();  // We now search only the outermost voxels
 
         if (spawnPosition != Vector3.zero)
         {
-            GameObject human = Instantiate(voxelPrefab, spawnPosition, Quaternion.identity);
-            Renderer humanRenderer = human.GetComponent<Renderer>();
-            humanRenderer.material = humanMaterial;
+            GameObject human = Instantiate(humanPrefab, spawnPosition, Quaternion.identity, humanParent);
+
+            // Calculate the normal direction from the center of the planet to this position
+            Vector3 normalDirection = (spawnPosition - cubePosition.position).normalized;
+
+            // Align the human so that "up" is away from the planet's center
+            human.transform.rotation = Quaternion.FromToRotation(Vector3.up, normalDirection);
+
             human.tag = "Human";
             humans.Add(human);
+            Debug.Log("Spawned new Human at position: " + spawnPosition);
         }
-    }
-
-    // Finde eine gültige Position für den Menschen (kein Wasser, keine Bäume)
-    private Vector3 FindValidSpawnPosition()
-    {
-        foreach (GameObject voxel in createdVoxels)
+        else
         {
-            if (voxel.CompareTag("Voxel")) // Nur normale Blöcke
-            {
-                return voxel.transform.position; // Spawnen an der Position dieses Voxels
-            }
+            Debug.LogWarning("No valid outer voxel found for Human.");
         }
-        return Vector3.zero; // Falls keine gültige Position gefunden wird
     }
 
-    // Function to place tree and start growth
-    // Define a parent for all trees
-    public Transform treeParent;
+
+    // Function to check if a voxel is an outer voxel by checking if it has an empty adjacent space
+   
 
     public void PlaceTree(GameObject targetVoxel)
     {
@@ -216,14 +270,194 @@ public class VoxelCube : MonoBehaviour
             StartCoroutine(GrowTree(treeBase, currentHeight + 1));
         }
     }
- 
+
+    public void SaveVoxelCube()
+    {
+        PlayerPrefs.DeleteAll(); // Optional: Clear previous save data
+
+        // Save voxel data
+        for (int i = 0; i < createdVoxels.Count; i++)
+        {
+            GameObject voxel = createdVoxels[i];
+            string voxelKey = "Voxel_" + i;
+            Vector3 voxelPos = voxel.transform.position;
+
+            // Save position
+            PlayerPrefs.SetFloat(voxelKey + "_x", voxelPos.x);
+            PlayerPrefs.SetFloat(voxelKey + "_y", voxelPos.y);
+            PlayerPrefs.SetFloat(voxelKey + "_z", voxelPos.z);
+
+            // Save tag (Tree, Water, or normal Voxel)
+            PlayerPrefs.SetString(voxelKey + "_tag", voxel.tag);
+
+            // If the voxel is a tree, save the tree's height
+            if (voxel.tag == "Tree")
+            {
+                float treeHeight = voxel.transform.localScale.y; // Assuming scale.y represents the height
+                PlayerPrefs.SetFloat(voxelKey + "_height", treeHeight);
+            }
+        }
+
+        // Save humans (if required)
+        for (int i = 0; i < humans.Count; i++)
+        {
+            GameObject human = humans[i];
+            Vector3 humanPos = human.transform.position;
+            string humanKey = "Human_" + i;
+            PlayerPrefs.SetFloat(humanKey + "_x", humanPos.x);
+            PlayerPrefs.SetFloat(humanKey + "_y", humanPos.y);
+            PlayerPrefs.SetFloat(humanKey + "_z", humanPos.z);
+        }
+
+        // Save water cubes under WaterParent
+        for (int i = 0; i < water.Count; i++)
+        {
+            GameObject waterVoxel = water[i];
+            string waterKey = "Water_" + i;
+            Vector3 waterPos = waterVoxel.transform.position;
+
+            PlayerPrefs.SetFloat(waterKey + "_x", waterPos.x);
+            PlayerPrefs.SetFloat(waterKey + "_y", waterPos.y);
+            PlayerPrefs.SetFloat(waterKey + "_z", waterPos.z);
+
+            PlayerPrefs.SetString(waterKey + "_tag", "Water");
+        }
+
+        // Save trees under Trees parent
+        for (int i = 0; i < trees.Count; i++)
+        {
+            GameObject tree = trees[i];
+            string treeKey = "Tree_" + i;
+            Vector3 treePos = tree.transform.position;
+
+            PlayerPrefs.SetFloat(treeKey + "_x", treePos.x);
+            PlayerPrefs.SetFloat(treeKey + "_y", treePos.y);
+            PlayerPrefs.SetFloat(treeKey + "_z", treePos.z);
+
+            float treeHeight = tree.transform.localScale.y; // Save tree height
+            PlayerPrefs.SetFloat(treeKey + "_height", treeHeight);
+
+            PlayerPrefs.SetString(treeKey + "_tag", "Tree");
+        }
+
+        // Save counts
+        PlayerPrefs.SetInt("VoxelCount", createdVoxels.Count);
+        PlayerPrefs.SetInt("WaterCount", water.Count);
+        PlayerPrefs.SetInt("TreeCount", trees.Count);
+        PlayerPrefs.SetInt("HumanCount", humans.Count);
+
+        PlayerPrefs.Save();
+        Debug.Log("Voxel cube saved successfully.");
+    }
 
 
 
+    public void LoadVoxelCube()
+    {
+        ClearVoxelCube(); // Clear any existing voxels, humans, or trees
 
-    // Funktion, um den VoxelCube zu löschen
+        // Load voxel data
+        int voxelCount = PlayerPrefs.GetInt("VoxelCount", 0);
+        for (int i = 0; i < voxelCount; i++)
+        {
+            string voxelKey = "Voxel_" + i;
+            Vector3 position = new Vector3(
+                PlayerPrefs.GetFloat(voxelKey + "_x"),
+                PlayerPrefs.GetFloat(voxelKey + "_y"),
+                PlayerPrefs.GetFloat(voxelKey + "_z")
+            );
+            string tag = PlayerPrefs.GetString(voxelKey + "_tag");
+
+            // Instantiate voxel at saved position
+            GameObject voxel = Instantiate(voxelPrefab, position, Quaternion.identity, voxelCubeParent);
+            voxel.tag = tag;
+
+            // Set the correct material based on the tag
+            Renderer renderer = voxel.GetComponent<Renderer>();
+            if (tag == "Tree")
+            {
+                // Assign tree material and load its height
+                renderer.material = treeMaterial;
+
+                // Restore the tree's height
+                float treeHeight = PlayerPrefs.GetFloat(voxelKey + "_height", 1);
+                voxel.transform.localScale = new Vector3(1, treeHeight, 1);
+                voxel.transform.parent = treeParent;  // Set parent to Trees
+                trees.Add(voxel);  // Add to trees list
+            }
+            else
+            {
+                // Default voxel material for non-tree voxels
+                renderer.material = outerLayerMaterial;
+            }
+
+            createdVoxels.Add(voxel); // Add to voxel list
+        }
+
+        // Load water cubes under WaterParent
+        int waterCount = PlayerPrefs.GetInt("WaterCount", 0);
+        for (int i = 0; i < waterCount; i++)
+        {
+            string waterKey = "Water_" + i;
+            Vector3 waterPos = new Vector3(
+                PlayerPrefs.GetFloat(waterKey + "_x"),
+                PlayerPrefs.GetFloat(waterKey + "_y"),
+                PlayerPrefs.GetFloat(waterKey + "_z")
+            );
+
+            // Instantiate water voxel
+            GameObject waterVoxel = Instantiate(voxelPrefab, waterPos, Quaternion.identity, waterParent);
+            waterVoxel.tag = "Water";
+
+            // Assign the water material
+            Renderer renderer = waterVoxel.GetComponent<Renderer>();
+            renderer.material = waterMaterial;
+
+            water.Add(waterVoxel);  // Add to water list
+        }
+
+        // Load trees under Trees parent
+        int treeCount = PlayerPrefs.GetInt("TreeCount", 0);
+        for (int i = 0; i < treeCount; i++)
+        {
+            string treeKey = "Tree_" + i;
+            Vector3 treePos = new Vector3(
+                PlayerPrefs.GetFloat(treeKey + "_x"),
+                PlayerPrefs.GetFloat(treeKey + "_y"),
+                PlayerPrefs.GetFloat(treeKey + "_z")
+            );
+
+            float treeHeight = PlayerPrefs.GetFloat(treeKey + "_height", 1);
+
+            // Instantiate tree at the saved position with correct height
+            GameObject tree = Instantiate(treePrefab, treePos, Quaternion.identity, treeParent);
+            tree.transform.localScale = new Vector3(1, treeHeight, 1);  // Restore tree height
+            tree.tag = "Tree";
+
+            trees.Add(tree);  // Add to trees list
+        }
+
+        // Load human data (if needed)
+        int humanCount = PlayerPrefs.GetInt("HumanCount", 0);
+        for (int i = 0; i < humanCount; i++)
+        {
+            string humanKey = "Human_" + i;
+            Vector3 position = new Vector3(
+                PlayerPrefs.GetFloat(humanKey + "_x"),
+                PlayerPrefs.GetFloat(humanKey + "_y"),
+                PlayerPrefs.GetFloat(humanKey + "_z")
+            );
+            GameObject human = Instantiate(humanPrefab, position, Quaternion.identity, humanParent);
+            humans.Add(human);
+        }
+
+        Debug.Log("Voxel cube loaded successfully.");
+    }
+
+
     public void ClearVoxelCube()
     {
+        // Clear createdVoxels
         foreach (GameObject voxel in createdVoxels)
         {
             if (voxel != null)
@@ -233,7 +467,7 @@ public class VoxelCube : MonoBehaviour
         }
         createdVoxels.Clear();
 
-        // Lösche auch alle Menschen
+        // Clear humans
         foreach (GameObject human in humans)
         {
             if (human != null)
@@ -243,7 +477,7 @@ public class VoxelCube : MonoBehaviour
         }
         humans.Clear();
 
-        // Lösche alle Bäume
+        // Clear trees
         foreach (GameObject tree in trees)
         {
             if (tree != null)
@@ -252,5 +486,20 @@ public class VoxelCube : MonoBehaviour
             }
         }
         trees.Clear();
+
+        // Clear water cubes
+        foreach (GameObject waterVoxel in water)
+        {
+            if (waterVoxel != null)
+            {
+                DestroyImmediate(waterVoxel);
+            }
+        }
+        water.Clear();
     }
+
+
 }
+
+
+
