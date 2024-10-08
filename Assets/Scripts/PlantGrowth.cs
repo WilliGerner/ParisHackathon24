@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -5,11 +6,23 @@ public class PlantGrowth : MonoBehaviour
 {
     VoxelCube voxelCube;
     public GameObject plantPrefab;  // Prefab der Pflanze, die instanziert werden soll
-    public float checkInterval = 5f;  // Zeit in Sekunden zwischen den Nachbarschaftsüberprüfungen
-    public float checkDistance = 1f;  // Distanz zur Überprüfung der Nachbarn (eine Einheit = eine Zelle)
+    public float checkInterval = 5f;  // Zeit in Sekunden zwischen den Nachbarschaftsï¿½berprï¿½fungen
+    public float checkDistance = 1f;  // Distanz zur ï¿½berprï¿½fung der Nachbarn (eine Einheit = eine Zelle)
     public string[] blockedTags = { "Swamp", "Mountain", "Water", "City", "Tree" };  // Tags, die verhindern, dass Pflanzen wachsen
-    private Transform earthCore;  // Zentrum der Erde, für die Rotation
-    public int attackPower = 5;  // Angriffskraft (optional für spätere Logik)
+    private Transform earthCore;  // Zentrum der Erde, fï¿½r die Rotation
+    public int attackPower = 5;  // Angriffskraft (optional fï¿½r spï¿½tere Logik)
+    
+    [SerializeField]
+    private EarthManager earthManager;
+
+    private void OnEnable()
+    {
+        earthManager.onCompleteRotation += OnRotationCompleted;
+    }
+    private void OnDisable()
+    {
+        earthManager.onCompleteRotation += OnRotationCompleted;
+    }
 
     private void Start()
     {
@@ -18,7 +31,11 @@ public class PlantGrowth : MonoBehaviour
         StartCoroutine(CheckNeighborsRoutine());  // Startet das Flood-Fill-Wachstum
     }
 
-    // Coroutine, die regelmäßig die Nachbarn überprüft
+    private void OnRotationCompleted(object sender)
+    {
+        SpreadPlant();
+    }
+    // Coroutine, die regelmï¿½ï¿½ig die Nachbarn ï¿½berprï¿½ft
     private IEnumerator CheckNeighborsRoutine()
     {
         while (true)
@@ -29,17 +46,17 @@ public class PlantGrowth : MonoBehaviour
         }
     }
 
-    // Funktion, die überprüft, ob Pflanzen um den aktuellen Punkt wachsen können
+    // Funktion, die ï¿½berprï¿½ft, ob Pflanzen um den aktuellen Punkt wachsen kï¿½nnen
     private void SpreadPlant()
     {
         // Berechne die Richtung von der aktuellen Pflanze zum Earthcore (Zentrum des Planeten)
         Vector3 directionFromCore = (transform.position - earthCore.position).normalized;
 
-        // Berechne die lokalen horizontalen Richtungen relativ zur Position auf der Oberfläche
-        Vector3 right = Vector3.Cross(Vector3.up, directionFromCore).normalized;  // Rechtwinklig zur Oberfläche
-        Vector3 forward = Vector3.Cross(directionFromCore, right).normalized;  // Nach "vorne" relativ zur Oberfläche
+        // Berechne die lokalen horizontalen Richtungen relativ zur Position auf der Oberflï¿½che
+        Vector3 right = Vector3.Cross(Vector3.up, directionFromCore).normalized;  // Rechtwinklig zur Oberflï¿½che
+        Vector3 forward = Vector3.Cross(directionFromCore, right).normalized;  // Nach "vorne" relativ zur Oberflï¿½che
 
-        // Definiere die vier horizontalen Richtungen relativ zur Erdoberfläche
+        // Definiere die vier horizontalen Richtungen relativ zur Erdoberflï¿½che
         Vector3[] directions = new Vector3[]
         {
             forward,        // Nach "vorne"
@@ -48,20 +65,20 @@ public class PlantGrowth : MonoBehaviour
             -right          // Nach "links"
         };
 
-        // Überprüfe jede Richtung
+        // ï¿½berprï¿½fe jede Richtung
         bool plantGrown = false;
         foreach (Vector3 direction in directions)
         {
             Vector3 checkPosition = transform.position + direction * checkDistance;  // Neue Position in der Richtung
 
-            // Prüfe, ob die Position blockiert ist oder ob sich dort bereits eine Pflanze befindet
+            // Prï¿½fe, ob die Position blockiert ist oder ob sich dort bereits eine Pflanze befindet
             if (!IsBlockedByTag(checkPosition) && !HasPlantAtPosition(checkPosition))
             {
-                // Wachse eine neue Pflanze auf derselben Höhe
+                // Wachse eine neue Pflanze auf derselben Hï¿½he
                 GameObject newPlant = Instantiate(plantPrefab, checkPosition, GetRotationFromEarthCore(checkPosition), transform.parent);
                 voxelCube.trees.Add(newPlant);
 
-                // Setze spezifische Logik für das neue Pflanzenskript hier ein (falls benötigt)
+                // Setze spezifische Logik fï¿½r das neue Pflanzenskript hier ein (falls benï¿½tigt)
                 PlantGrowth newPlantScript = newPlant.GetComponent<PlantGrowth>();
 
                 // Markiere, dass in mindestens einer Richtung eine Pflanze gewachsen ist
@@ -70,10 +87,10 @@ public class PlantGrowth : MonoBehaviour
         }
     }
 
-    // Funktion, um zu überprüfen, ob an der Position bereits eine Pflanze existiert
+    // Funktion, um zu ï¿½berprï¿½fen, ob an der Position bereits eine Pflanze existiert
     private bool HasPlantAtPosition(Vector3 position)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f);  // Überprüft einen kleinen Radius um die Position
+        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f);  // ï¿½berprï¿½ft einen kleinen Radius um die Position
         foreach (Collider hitCollider in hitColliders)
         {
             if (hitCollider.CompareTag("Tree") || hitCollider.CompareTag("Mountain") ||
@@ -91,10 +108,10 @@ public class PlantGrowth : MonoBehaviour
         return false;  // Keine Pflanze an der Position
     }
 
-    // Funktion, um zu überprüfen, ob ein bestimmtes Tag die Position blockiert
+    // Funktion, um zu ï¿½berprï¿½fen, ob ein bestimmtes Tag die Position blockiert
     private bool IsBlockedByTag(Vector3 position)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f);  // Überprüfe Objekte in einem kleinen Radius
+        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f);  // ï¿½berprï¿½fe Objekte in einem kleinen Radius
         foreach (Collider hitCollider in hitColliders)
         {
             // Wenn eines der Objekte einen blockierenden Tag hat
