@@ -11,7 +11,7 @@ public class EarthManager : MonoBehaviour
     public int rotationCount;
 
     private float totalRotation;
-    public Action<object> onCompleteRotation;
+   // public Action<object> onCompleteRotation;
     
     // Update is called once per frame
     void Update()
@@ -41,7 +41,7 @@ public class EarthManager : MonoBehaviour
                 Debug.LogError($"Happy new Year. Welcome to {2432 + rotationCount}!!!!111eleven");
 
                 // Invoke the event
-                onCompleteRotation.Invoke(this);
+             //   onCompleteRotation.Invoke(this);
             }
         }
         else

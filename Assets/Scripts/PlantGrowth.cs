@@ -3,6 +3,7 @@ using UnityEngine;
 
 public class PlantGrowth : MonoBehaviour
 {
+    public float distanceMultiplier;
     VoxelCube voxelCube;
     public GameObject plantPrefab;  // Prefab der Pflanze, die instanziert werden soll
     public float checkInterval = 5f;  // Zeit in Sekunden zwischen den Nachbarschaftsüberprüfungen
@@ -31,51 +32,47 @@ public class PlantGrowth : MonoBehaviour
 
     private void SpreadPlant()
     {
-        // Get the scale of the VoxelManager (this is what contains the voxelCube)
+        // Hol dir die Skalierung des VoxelManagers (dieser enthält das VoxelCube)
         Vector3 scaleFactor = voxelCube.transform.localScale;
 
-        // Calculate the direction from the current plant to the Earthcore (center of the planet)
+        // Berechne die Richtung von der aktuellen Pflanze zum Earthcore (Zentrum des Planeten)
         Vector3 directionFromCore = (transform.position - earthCore.position).normalized;
 
-        // Calculate the local horizontal directions relative to the position on the surface
+        // Berechne die lokalen horizontalen Richtungen relativ zur Position auf der Oberfläche
         Vector3 right = Vector3.Cross(Vector3.up, directionFromCore).normalized;
         Vector3 forward = Vector3.Cross(directionFromCore, right).normalized;
 
-        // Define the four horizontal directions relative to the Earth's surface
+        // Definiere die vier horizontalen Richtungen relativ zur Erdoberfläche
         Vector3[] directions = new Vector3[]
         {
-        forward,
-        -forward,
-        right,
-        -right
+        forward,        // Nach "vorne"
+        -forward,       // Nach "hinten"
+        right,          // Nach "rechts"
+        -right          // Nach "links"
         };
 
-        // Check each direction
         bool plantGrown = false;
         foreach (Vector3 direction in directions)
         {
-            // Reduce the distance to place the blocks closer to the surface
-Vector3 checkPosition = transform.position + Vector3.Scale(direction, scaleFactor) * (checkDistance * 0.8f);  // Adjust this factor as needed
+            // Skaliere die Wachstumsposition entsprechend der Skalierung des VoxelManagers
+            Vector3 checkPosition = transform.position + direction * (checkDistance * scaleFactor.x);
 
-
-            // Check if the position is blocked or already has a plant
+            // Prüfe, ob die Position blockiert ist oder ob sich dort bereits eine Pflanze befindet
             if (!IsBlockedByTag(checkPosition) && !HasPlantAtPosition(checkPosition))
             {
-                // Grow a new plant at the correct scaled position
-                Vector3 plantPosition = checkPosition;
-
-                // Apply the rotation considering the scale
-                GameObject newPlant = Instantiate(plantPrefab, plantPosition, GetRotationFromEarthCore(checkPosition), transform.parent);
+                // Wachse eine neue Pflanze auf der skalierten Position
+                GameObject newPlant = Instantiate(plantPrefab, checkPosition, GetRotationFromEarthCore(checkPosition), transform.parent);
                 voxelCube.trees.Add(newPlant);
 
-                // Set specific logic for the new plant script here if needed
+                // Setze spezifische Logik für das neue Pflanzenskript hier ein (falls benötigt)
                 PlantGrowth newPlantScript = newPlant.GetComponent<PlantGrowth>();
 
-                // Mark that at least one plant has grown
                 plantGrown = true;
             }
         }
     }
+
+
 
 
     // Function to check if a plant already exists at the position, considering the scale
