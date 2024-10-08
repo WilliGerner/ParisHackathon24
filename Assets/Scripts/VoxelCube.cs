@@ -18,6 +18,7 @@ public class VoxelCube : MonoBehaviour
     public GameObject mountainPrefab; // Prefab for the mountain
     public GameObject swampPrefab; // Prefab for the swamp
     public GameObject cityPrefab; // Prefab for the city
+    public GameObject waterPrefab; // Prefab for the city
     public Transform cubePosition; // Position where the voxel cube is created (center of the planet)
 
     [Header("Material Settings")]
@@ -143,41 +144,41 @@ public class VoxelCube : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
-            {
-                if (hit.transform.CompareTag("Voxel"))
-                {
-                    PlaceMountain(hit.transform.gameObject);
-                }
-            }
-        }
+        //if (Input.GetKeyDown(KeyCode.M))
+        //{
+        //    RaycastHit hit;
+        //    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
+        //    {
+        //        if (hit.transform.CompareTag("Voxel"))
+        //        {
+        //            PlaceMountain(hit.transform.gameObject);
+        //        }
+        //    }
+        //}
 
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
-            {
-                if (hit.transform.CompareTag("Voxel"))
-                {
-                    PlaceSwamp(hit.transform.gameObject);
-                }
-            }
-        }
+        //if (Input.GetKeyDown(KeyCode.S))
+        //{
+        //    RaycastHit hit;
+        //    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
+        //    {
+        //        if (hit.transform.CompareTag("Voxel"))
+        //        {
+        //            PlaceSwamp(hit.transform.gameObject);
+        //        }
+        //    }
+        //}
 
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
-            {
-                if (hit.transform.CompareTag("Voxel"))
-                {
-                    PlaceCity(hit.transform.gameObject);
-                }
-            }
-        }
+        //if (Input.GetKeyDown(KeyCode.C))
+        //{
+        //    RaycastHit hit;
+        //    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
+        //    {
+        //        if (hit.transform.CompareTag("Voxel"))
+        //        {
+        //            PlaceCity(hit.transform.gameObject);
+        //        }
+        //    }
+        //}
     }
 
     public void GenerateVoxelCube()
@@ -270,62 +271,63 @@ public class VoxelCube : MonoBehaviour
         trees.Add(newTree);
     }
 
-
-
-
-    public void PlaceMountain(GameObject targetVoxel)
+    public void PlaceWater(Vector3 hitPoint, Vector3 surfaceNormal, Vector3 directionFromCore)
     {
-        RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
-        {
-            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
-            Vector3 mountainPosition = hit.point + directionFromCore * 0.5f; // Offset outward
+        // Use the exact hit point to position the tree
+        Vector3 waterPosition = hitPoint;
 
-            mountainPosition = new Vector3(Mathf.Round(mountainPosition.x), Mathf.Round(mountainPosition.y), Mathf.Round(mountainPosition.z));
+        // Calculate the rotation based on the direction from the core and the surface normal
+        Quaternion waterRotation = Quaternion.LookRotation(directionFromCore, surfaceNormal);
 
-            Quaternion mountainRotation = GetRotationFromDirection(directionFromCore);
-
-            GameObject newMountain = Instantiate(mountainPrefab, mountainPosition, mountainRotation, mountainParent);
-            newMountain.tag = "Mountain";
-            mountains.Add(newMountain);
-        }
+        // Instantiate the tree at the hit point with the correct rotation
+        GameObject newTree = Instantiate(waterPrefab, waterPosition, waterRotation, waterParent);
+        newTree.tag = "Tree";
+        water.Add(newTree);
     }
 
-    public void PlaceSwamp(GameObject targetVoxel)
+    public void PlaceMountain(Vector3 hitPoint, Vector3 surfaceNormal, Vector3 directionFromCore)
     {
-        RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
-        {
-            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
-            Vector3 swampPosition = hit.point + directionFromCore * 0.5f; // Offset outward
+        // Use the exact hit point to position the mountain
+        Vector3 mountainPosition = hitPoint;
 
-            swampPosition = new Vector3(Mathf.Round(swampPosition.x), Mathf.Round(swampPosition.y), Mathf.Round(swampPosition.z));
+        // Calculate the rotation based on the direction from the core and the surface normal
+        Quaternion mountainRotation = Quaternion.LookRotation(directionFromCore, surfaceNormal);
 
-            Quaternion swampRotation = GetRotationFromDirection(directionFromCore);
-
-            GameObject newSwamp = Instantiate(swampPrefab, swampPosition, swampRotation, swampParent);
-            newSwamp.tag = "Swamp";
-            swamps.Add(newSwamp);
-        }
+        // Instantiate the mountain at the hit point with the correct rotation
+        GameObject newMountain = Instantiate(mountainPrefab, mountainPosition, mountainRotation, mountainParent);
+        newMountain.tag = "Mountain";
+        mountains.Add(newMountain);
     }
 
-    public void PlaceCity(GameObject targetVoxel)
+
+    public void PlaceSwamp(Vector3 hitPoint, Vector3 surfaceNormal, Vector3 directionFromCore)
     {
-        RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
-        {
-            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
-            Vector3 cityPosition = hit.point + directionFromCore * 0.5f; // Offset outward
+        // Use the exact hit point to position the swamp
+        Vector3 swampPosition = hitPoint;
 
-            cityPosition = new Vector3(Mathf.Round(cityPosition.x), Mathf.Round(cityPosition.y), Mathf.Round(cityPosition.z));
+        // Calculate the rotation based on the direction from the core and the surface normal
+        Quaternion swampRotation = Quaternion.LookRotation(directionFromCore, surfaceNormal);
 
-            Quaternion cityRotation = GetRotationFromDirection(directionFromCore);
-
-            GameObject newCity = Instantiate(cityPrefab, cityPosition, cityRotation, cityParent);
-            newCity.tag = "City";
-            cities.Add(newCity);
-        }
+        // Instantiate the swamp at the hit point with the correct rotation
+        GameObject newSwamp = Instantiate(swampPrefab, swampPosition, swampRotation, swampParent);
+        newSwamp.tag = "Swamp";
+        swamps.Add(newSwamp);
     }
+
+    public void PlaceCity(Vector3 hitPoint, Vector3 surfaceNormal, Vector3 directionFromCore)
+    {
+        // Use the exact hit point to position the city
+        Vector3 cityPosition = hitPoint;
+
+        // Calculate the rotation based on the direction from the core and the surface normal
+        Quaternion cityRotation = Quaternion.LookRotation(directionFromCore, surfaceNormal);
+
+        // Instantiate the city at the hit point with the correct rotation
+        GameObject newCity = Instantiate(cityPrefab, cityPosition, cityRotation, cityParent);
+        newCity.tag = "City";
+        cities.Add(newCity);
+    }
+
 
     // This function calculates the correct rotation based on the direction from the Earth core
     private Quaternion GetRotationFromDirection(Vector3 outwardDirection)
