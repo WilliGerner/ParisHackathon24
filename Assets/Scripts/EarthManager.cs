@@ -38,7 +38,6 @@ public class EarthManager : MonoBehaviour
                 totalRotation -= 360f;
                 rotationCount++;
                 Debug.Log("Total rotations: " + rotationCount);
-                Debug.LogError($"Happy new Year. Welcome to {2432 + rotationCount}!!!!111eleven");
 
                 // Invoke the event
              //   onCompleteRotation.Invoke(this);
