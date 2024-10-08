@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3165900724502107348}
   - component: {fileID: 2653106897683389417}
   - component: {fileID: 9005474700262136825}
+  - component: {fileID: 6949160428917717944}
   m_Layer: 0
   m_Name: City
   m_TagString: Untagged
@@ -112,6 +113,29 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6949160428917717944
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3073806554339267453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fd5f5b7e5c55d4543b8586304a96d3c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cityPrefab: {fileID: 3073806554339267453}
+  checkInterval: 5
+  checkDistance: 1
+  blockedTags:
+  - Swamp
+  - Mountain
+  - Water
+  - City
+  - Tree
+  maxDepth: 3
+  attackPower: 10
 --- !u!1 &3397574615005740202
 GameObject:
   m_ObjectHideFlags: 0

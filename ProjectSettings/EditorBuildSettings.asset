@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Multiplayer Test.unity
     guid: e20bf2cb4dd4aa74da500e10f1b66d6c
+  - enabled: 1
+    path: Assets/Scenes/Voxel Tests.unity
+    guid: e52ae90086b753b47b794154cf186883
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: 1481f18d317a41b4f89dd1d0bd4d5534,
       type: 2}
