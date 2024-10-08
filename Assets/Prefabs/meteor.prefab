@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 393346121144898095}
   - component: {fileID: 6143306460089738776}
   - component: {fileID: 7658591534910222560}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Mountain (1)
-  m_TagString: Untagged
+  m_TagString: Meteor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -117,9 +117,9 @@ GameObject:
   - component: {fileID: 7718435316251721176}
   - component: {fileID: 3824113685468331750}
   - component: {fileID: 5454368042239170502}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: Mountain
-  m_TagString: Untagged
+  m_TagString: Meteor
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -223,7 +223,7 @@ GameObject:
   - component: {fileID: 5385091334669867382}
   - component: {fileID: 4081819297474739640}
   - component: {fileID: 4941241031291639058}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: meteor
   m_TagString: Meteor
   m_Icon: {fileID: 0}
