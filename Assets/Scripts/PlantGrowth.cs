@@ -29,85 +29,89 @@ public class PlantGrowth : MonoBehaviour
         }
     }
 
-    // Funktion, die überprüft, ob Pflanzen um den aktuellen Punkt wachsen können
     private void SpreadPlant()
     {
-        // Berechne die Richtung von der aktuellen Pflanze zum Earthcore (Zentrum des Planeten)
+        // Get the scale of the VoxelManager (this is what contains the voxelCube)
+        Vector3 scaleFactor = voxelCube.transform.localScale;
+
+        // Calculate the direction from the current plant to the Earthcore (center of the planet)
         Vector3 directionFromCore = (transform.position - earthCore.position).normalized;
 
-        // Berechne die lokalen horizontalen Richtungen relativ zur Position auf der Oberfläche
-        Vector3 right = Vector3.Cross(Vector3.up, directionFromCore).normalized;  // Rechtwinklig zur Oberfläche
-        Vector3 forward = Vector3.Cross(directionFromCore, right).normalized;  // Nach "vorne" relativ zur Oberfläche
+        // Calculate the local horizontal directions relative to the position on the surface
+        Vector3 right = Vector3.Cross(Vector3.up, directionFromCore).normalized;
+        Vector3 forward = Vector3.Cross(directionFromCore, right).normalized;
 
-        // Definiere die vier horizontalen Richtungen relativ zur Erdoberfläche
+        // Define the four horizontal directions relative to the Earth's surface
         Vector3[] directions = new Vector3[]
         {
-            forward,        // Nach "vorne"
-            -forward,       // Nach "hinten"
-            right,          // Nach "rechts"
-            -right          // Nach "links"
+        forward,
+        -forward,
+        right,
+        -right
         };
 
-        // Überprüfe jede Richtung
+        // Check each direction
         bool plantGrown = false;
         foreach (Vector3 direction in directions)
         {
-            Vector3 checkPosition = transform.position + direction * checkDistance;  // Neue Position in der Richtung
+            // Reduce the distance to place the blocks closer to the surface
+Vector3 checkPosition = transform.position + Vector3.Scale(direction, scaleFactor) * (checkDistance * 0.8f);  // Adjust this factor as needed
 
-            // Prüfe, ob die Position blockiert ist oder ob sich dort bereits eine Pflanze befindet
+
+            // Check if the position is blocked or already has a plant
             if (!IsBlockedByTag(checkPosition) && !HasPlantAtPosition(checkPosition))
             {
-                // Wachse eine neue Pflanze auf derselben Höhe
-                GameObject newPlant = Instantiate(plantPrefab, checkPosition, GetRotationFromEarthCore(checkPosition), transform.parent);
+                // Grow a new plant at the correct scaled position
+                Vector3 plantPosition = checkPosition;
+
+                // Apply the rotation considering the scale
+                GameObject newPlant = Instantiate(plantPrefab, plantPosition, GetRotationFromEarthCore(checkPosition), transform.parent);
                 voxelCube.trees.Add(newPlant);
 
-                // Setze spezifische Logik für das neue Pflanzenskript hier ein (falls benötigt)
+                // Set specific logic for the new plant script here if needed
                 PlantGrowth newPlantScript = newPlant.GetComponent<PlantGrowth>();
 
-                // Markiere, dass in mindestens einer Richtung eine Pflanze gewachsen ist
+                // Mark that at least one plant has grown
                 plantGrown = true;
             }
         }
     }
 
-    // Funktion, um zu überprüfen, ob an der Position bereits eine Pflanze existiert
+
+    // Function to check if a plant already exists at the position, considering the scale
     private bool HasPlantAtPosition(Vector3 position)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f);  // Überprüft einen kleinen Radius um die Position
+        Vector3 scaleFactor = voxelCube.transform.localScale;
+        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f * scaleFactor.x); // Adjust radius by the scale factor
         foreach (Collider hitCollider in hitColliders)
         {
             if (hitCollider.CompareTag("Tree") || hitCollider.CompareTag("Mountain") ||
                 hitCollider.CompareTag("City") || hitCollider.CompareTag("Swamp"))
             {
-                Debug.Log("Hit Tag");
-                return true;  // Position ist belegt
-            }
-
-            if (hitCollider.CompareTag("Voxel"))
-            {
-                Debug.Log("Hit Voxel");
+                return true;  // Position is occupied
             }
         }
-        return false;  // Keine Pflanze an der Position
+        return false;  // No plant at the position
     }
 
-    // Funktion, um zu überprüfen, ob ein bestimmtes Tag die Position blockiert
+    // Function to check if the position is blocked by a tag, considering the scale
     private bool IsBlockedByTag(Vector3 position)
     {
-        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f);  // Überprüfe Objekte in einem kleinen Radius
+        Vector3 scaleFactor = voxelCube.transform.localScale;
+        Collider[] hitColliders = Physics.OverlapSphere(position, 0.1f * scaleFactor.x); // Adjust radius by the scale factor
         foreach (Collider hitCollider in hitColliders)
         {
-            // Wenn eines der Objekte einen blockierenden Tag hat
             foreach (string tag in blockedTags)
             {
                 if (hitCollider.CompareTag(tag))
                 {
-                    return true;  // Blockiert
+                    return true;  // Blocked
                 }
             }
         }
-        return false;  // Nicht blockiert
+        return false;  // Not blocked
     }
+
 
     // Funktion, um die Rotation basierend auf dem Earthcore zu berechnen
     private Quaternion GetRotationFromEarthCore(Vector3 plantPosition)

@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class VoxelCube : MonoBehaviour
 {
+    public Transform targetPosition;
     public Transform earthCore;
     [Header("Voxel Cube Settings")]
     public int diameter = 5; // Diameter of the VoxelCube
@@ -84,9 +85,30 @@ public class VoxelCube : MonoBehaviour
             }
         }
     }
+    // Function to check if the position of the VoxelCube is correct, and move it if necessary
+    public void CheckAndMoveToTargetPosition()
+    {
+        if (targetPosition != null)
+        {
+            // Check if the current position is different from the target position
+            if (transform.position != targetPosition.position)
+            {
+                Debug.Log("Position mismatch. Moving to target position.");
+                transform.position = targetPosition.position;  // Move to the target position
+            }
+
+            //// Optionally, if you want to ensure rotation is also matched, you can add:
+            //if (transform.rotation != targetPosition.rotation)
+            //{
+            //    Debug.Log("Rotation mismatch. Rotating to target rotation.");
+            //    transform.rotation = targetPosition.rotation;  // Match rotation as well
+            //}
+        }
+    }
 
     private void Update()
     {
+        CheckAndMoveToTargetPosition();  // Call this function every frame
         //// Human spawning logic
         //if (Time.time >= nextHumanSpawnTime)
         //{
