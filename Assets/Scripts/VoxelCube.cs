@@ -50,28 +50,28 @@ public class VoxelCube : MonoBehaviour
 
     private void Start()
     {
-        // Load saved voxel cube if any exists
-        if (PlayerPrefs.HasKey("VoxelCount"))
-        {
-            LoadVoxelCube();
-        }
-        else
-        {
-            // Generate the voxel cube for the first time
-            GenerateVoxelCube();
-        }
+        //// Load saved voxel cube if any exists
+        //if (PlayerPrefs.HasKey("VoxelCount"))
+        //{
+        //    LoadVoxelCube();
+        //}
+        //else
+        //{
+        //    // Generate the voxel cube for the first time
+        //    GenerateVoxelCube();
+        //}
 
-        nextHumanSpawnTime = Time.time + humanSpawnInterval;
+        //nextHumanSpawnTime = Time.time + humanSpawnInterval;
 
-        if (createdVoxels.Count == 0 && voxelCubeParent != null)
-        {
-            PopulateCreatedVoxelsFromParent();
-        }
+        //if (createdVoxels.Count == 0 && voxelCubeParent != null)
+        //{
+        //    PopulateCreatedVoxelsFromParent();
+        //}
     }
 
     private void OnApplicationQuit()
     {
-        SaveVoxelCube();
+        //SaveVoxelCube();
     }
 
     private void PopulateCreatedVoxelsFromParent()
@@ -87,19 +87,25 @@ public class VoxelCube : MonoBehaviour
 
     private void Update()
     {
-        // Human spawning logic
-        if (Time.time >= nextHumanSpawnTime)
-        {
-            SpawnHuman();
-            nextHumanSpawnTime = Time.time + humanSpawnInterval;
-        }
+        //// Human spawning logic
+        //if (Time.time >= nextHumanSpawnTime)
+        //{
+        //    SpawnHuman();
+        //    nextHumanSpawnTime = Time.time + humanSpawnInterval;
+        //}
 
-        // Left-click to place a tree
+        // Define a LayerMask that excludes the "IgnoreRaycastLayer"
+        int layerMask = 1 << LayerMask.NameToLayer("HackathonIgnore");
+        layerMask = ~layerMask; // Invert the mask to exclude this layer
+
+        // Left-click to place tree (already given)
         if (Input.GetMouseButtonDown(0))
         {
+            Debug.Log("LeftClick");
             RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
             {
+                Debug.Log("Hit: " + hit.transform.gameObject.name);
                 if (hit.transform.CompareTag("Voxel"))
                 {
                     PlaceTree(hit.transform.gameObject);
@@ -111,7 +117,7 @@ public class VoxelCube : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
             {
                 if (hit.transform.CompareTag("Voxel"))
                 {
@@ -124,7 +130,7 @@ public class VoxelCube : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.M))
         {
             RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
             {
                 if (hit.transform.CompareTag("Voxel"))
                 {
@@ -137,7 +143,7 @@ public class VoxelCube : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.S))
         {
             RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
             {
                 if (hit.transform.CompareTag("Voxel"))
                 {
@@ -150,7 +156,7 @@ public class VoxelCube : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.C))
         {
             RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
+            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
             {
                 if (hit.transform.CompareTag("Voxel"))
                 {
@@ -320,45 +326,26 @@ public class VoxelCube : MonoBehaviour
         return Quaternion.LookRotation(Vector3.Cross(outwardDirection, Vector3.up), outwardDirection);
     }
 
-    //private Vector3 SnapToWorldAxis(Vector3 direction)
-    //{
-    //    // Snap to the closest axis (up, down, left, right, forward, back)
-    //    Vector3 snapDirection = Vector3.zero;
-
-    //    // Check which world axis the outward direction is closest to
-    //    if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y) && Mathf.Abs(direction.x) > Mathf.Abs(direction.z))
-    //    {
-    //        snapDirection = (direction.x > 0) ? Vector3.right : Vector3.left;
-    //    }
-    //    else if (Mathf.Abs(direction.y) > Mathf.Abs(direction.x) && Mathf.Abs(direction.y) > Mathf.Abs(direction.z))
-    //    {
-    //        snapDirection = (direction.y > 0) ? Vector3.up : Vector3.down;
-    //    }
-    //    else
-    //    {
-    //        snapDirection = (direction.z > 0) ? Vector3.forward : Vector3.back;
-    //    }
-
-    //    return snapDirection;
-    //}
-
-
     public void SaveVoxelCube()
     {
         PlayerPrefs.DeleteAll(); // Optional: clear old data
 
         // Save voxels
-        for (int i = 0; i < createdVoxels.Count; i++)
+        if(createdVoxels.Count > 0 )
         {
-            GameObject voxel = createdVoxels[i];
-            string voxelKey = "Voxel_" + i;
-            Vector3 voxelPos = voxel.transform.position;
+            for (int i = 0; i < createdVoxels.Count; i++)
+            {
+                GameObject voxel = createdVoxels[i];
+                string voxelKey = "Voxel_" + i;
+                Vector3 voxelPos = voxel.transform.position;
 
-            PlayerPrefs.SetFloat(voxelKey + "_x", voxelPos.x);
-            PlayerPrefs.SetFloat(voxelKey + "_y", voxelPos.y);
-            PlayerPrefs.SetFloat(voxelKey + "_z", voxelPos.z);
-            PlayerPrefs.SetString(voxelKey + "_tag", voxel.tag);
+                PlayerPrefs.SetFloat(voxelKey + "_x", voxelPos.x);
+                PlayerPrefs.SetFloat(voxelKey + "_y", voxelPos.y);
+                PlayerPrefs.SetFloat(voxelKey + "_z", voxelPos.z);
+                PlayerPrefs.SetString(voxelKey + "_tag", voxel.tag);
+            }
         }
+      
 
         // Save humans
         for (int i = 0; i < humans.Count; i++)
@@ -418,6 +405,18 @@ public class VoxelCube : MonoBehaviour
             PlayerPrefs.SetFloat(cityKey + "_x", cityPos.x);
             PlayerPrefs.SetFloat(cityKey + "_y", cityPos.y);
             PlayerPrefs.SetFloat(cityKey + "_z", cityPos.z);
+        }
+
+        // Save Trees
+        for (int i = 0; i < trees.Count; i++)
+        {
+            GameObject tree = trees[i];
+            string treeKey = "Tree_" + i;
+            Vector3 treePos = tree.transform.position;
+
+            PlayerPrefs.SetFloat(treeKey + "_x", treePos.x);
+            PlayerPrefs.SetFloat(treeKey + "_y", treePos.y);
+            PlayerPrefs.SetFloat(treeKey + "_z", treePos.z);
         }
 
         // Save counts
@@ -550,6 +549,21 @@ public class VoxelCube : MonoBehaviour
 
             GameObject city = Instantiate(cityPrefab, cityPos, Quaternion.identity, cityParent);
             cities.Add(city);
+        }
+
+        // Load Trees
+        int treeCount = PlayerPrefs.GetInt("TreeCount", 0);
+        for (int i = 0; i < treeCount; i++)
+        {
+            string treeKey = "Tree_" + i;
+            Vector3 treePos = new Vector3(
+                PlayerPrefs.GetFloat(treeKey + "_x"),
+                PlayerPrefs.GetFloat(treeKey + "_y"),
+                PlayerPrefs.GetFloat(treeKey + "_z")
+            );
+
+            GameObject tree = Instantiate(treePrefab, treePos, Quaternion.identity, treeParent);
+            trees.Add(tree);
         }
 
         Debug.Log("Voxel cube loaded successfully.");
