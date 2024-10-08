@@ -4,8 +4,12 @@ using UnityEngine;
 
 public class VoxelCube : MonoBehaviour
 {
+    // Singleton instance
+    public static VoxelCube Instance { get; private set; }
+
     public Transform targetPosition;
     public Transform earthCore;
+
     [Header("Voxel Cube Settings")]
     public int diameter = 5; // Diameter of the VoxelCube
     public GameObject voxelPrefab; // Prefab for general voxel
@@ -49,30 +53,35 @@ public class VoxelCube : MonoBehaviour
     public Transform swampParent;
     public Transform cityParent;
 
+    // Singleton setup
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning("Multiple instances of VoxelCube detected. Destroying the new one.");
+            Destroy(gameObject); // Destroy the new instance if one already exists
+        }
+        else
+        {
+            Instance = this; // Assign the instance
+            DontDestroyOnLoad(gameObject); // Ensure the singleton persists across scenes
+        }
+    }
+
     private void Start()
     {
-        //// Load saved voxel cube if any exists
-        //if (PlayerPrefs.HasKey("VoxelCount"))
-        //{
-        //    LoadVoxelCube();
-        //}
-        //else
-        //{
-        //    // Generate the voxel cube for the first time
-        //    GenerateVoxelCube();
-        //}
+        // If needed, initialize voxel cube or load previously saved state here
+        nextHumanSpawnTime = Time.time + humanSpawnInterval;
 
-        //nextHumanSpawnTime = Time.time + humanSpawnInterval;
-
-        //if (createdVoxels.Count == 0 && voxelCubeParent != null)
-        //{
-        //    PopulateCreatedVoxelsFromParent();
-        //}
+        if (createdVoxels.Count == 0 && voxelCubeParent != null)
+        {
+            PopulateCreatedVoxelsFromParent();
+        }
     }
 
     private void OnApplicationQuit()
     {
-        //SaveVoxelCube();
+        //SaveVoxelCube(); // Save the voxel cube state when quitting the application
     }
 
     private void PopulateCreatedVoxelsFromParent()
@@ -85,57 +94,43 @@ public class VoxelCube : MonoBehaviour
             }
         }
     }
-    // Function to check if the position of the VoxelCube is correct, and move it if necessary
+
     public void CheckAndMoveToTargetPosition()
     {
         if (targetPosition != null)
         {
-            // Check if the current position is different from the target position
             if (transform.position != targetPosition.position)
             {
                 Debug.Log("Position mismatch. Moving to target position.");
-                transform.position = targetPosition.position;  // Move to the target position
+                transform.position = targetPosition.position;
             }
-
-            //// Optionally, if you want to ensure rotation is also matched, you can add:
-            //if (transform.rotation != targetPosition.rotation)
-            //{
-            //    Debug.Log("Rotation mismatch. Rotating to target rotation.");
-            //    transform.rotation = targetPosition.rotation;  // Match rotation as well
-            //}
         }
     }
 
     private void Update()
     {
-        CheckAndMoveToTargetPosition();  // Call this function every frame
-        //// Human spawning logic
-        //if (Time.time >= nextHumanSpawnTime)
+        CheckAndMoveToTargetPosition();
+
+        // Handle user input for placing various objects on the voxel cube
+        HandleInput();
+    }
+
+    private void HandleInput()
+    {
+        int layerMask = ~LayerMask.GetMask("HackathonIgnore");
+
+        //if (Input.GetMouseButtonDown(0))
         //{
-        //    SpawnHuman();
-        //    nextHumanSpawnTime = Time.time + humanSpawnInterval;
+        //    RaycastHit hit;
+        //    if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
+        //    {
+        //        if (hit.transform.CompareTag("Voxel"))
+        //        {
+        //            PlaceTree(hit.transform.gameObject);
+        //        }
+        //    }
         //}
 
-        // Define a LayerMask that excludes the "IgnoreRaycastLayer"
-        int layerMask = 1 << LayerMask.NameToLayer("HackathonIgnore");
-        layerMask = ~layerMask; // Invert the mask to exclude this layer
-
-        // Left-click to place tree (already given)
-        if (Input.GetMouseButtonDown(0))
-        {
-            Debug.Log("LeftClick");
-            RaycastHit hit;
-            if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, Mathf.Infinity, layerMask))
-            {
-                Debug.Log("Hit: " + hit.transform.gameObject.name);
-                if (hit.transform.CompareTag("Voxel"))
-                {
-                    PlaceTree(hit.transform.gameObject);
-                }
-            }
-        }
-
-        // Right-click to place water
         if (Input.GetMouseButtonDown(1))
         {
             RaycastHit hit;
@@ -148,7 +143,6 @@ public class VoxelCube : MonoBehaviour
             }
         }
 
-        // Press 'M' to place mountain
         if (Input.GetKeyDown(KeyCode.M))
         {
             RaycastHit hit;
@@ -161,7 +155,6 @@ public class VoxelCube : MonoBehaviour
             }
         }
 
-        // Press 'S' to place swamp
         if (Input.GetKeyDown(KeyCode.S))
         {
             RaycastHit hit;
@@ -174,7 +167,6 @@ public class VoxelCube : MonoBehaviour
             }
         }
 
-        // Press 'C' to place city
         if (Input.GetKeyDown(KeyCode.C))
         {
             RaycastHit hit;
@@ -264,28 +256,22 @@ public class VoxelCube : MonoBehaviour
         }
     }
 
-    public void PlaceTree(GameObject targetVoxel)
+    public void PlaceTree(Vector3 hitPoint, Vector3 surfaceNormal, Vector3 directionFromCore)
     {
-        RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit))
-        {
-            // Calculate the direction from the earth core to the hit point
-            Vector3 directionFromCore = (hit.point - earthCore.position).normalized;
+        // Use the exact hit point to position the tree
+        Vector3 treePosition = hitPoint;
 
-            // Position the tree slightly outward along the hit point's normal
-            Vector3 treePosition = hit.point + directionFromCore * 0.5f; // Offset outward by 0.5 units
+        // Calculate the rotation based on the direction from the core and the surface normal
+        Quaternion treeRotation = Quaternion.LookRotation(directionFromCore, surfaceNormal);
 
-            // Snap position to the voxel grid
-            treePosition = new Vector3(Mathf.Round(treePosition.x), Mathf.Round(treePosition.y), Mathf.Round(treePosition.z));
-
-            // Calculate the rotation based on the outward direction
-            Quaternion treeRotation = GetRotationFromDirection(directionFromCore);
-
-            GameObject newTree = Instantiate(treePrefab, treePosition, treeRotation, treeParent);
-            newTree.tag = "Tree";
-            trees.Add(newTree);
-        }
+        // Instantiate the tree at the hit point with the correct rotation
+        GameObject newTree = Instantiate(treePrefab, treePosition, treeRotation, treeParent);
+        newTree.tag = "Tree";
+        trees.Add(newTree);
     }
+
+
+
 
     public void PlaceMountain(GameObject targetVoxel)
     {

@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &7356011406623348923
 Transform:
   m_ObjectHideFlags: 0
@@ -220,11 +220,12 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3073806554339267453}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a15e317c3919c5499e043bc842f05fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  distanceMultiplier: 0
   plantPrefab: {fileID: 3073806554339267453}
   checkInterval: 2
   checkDistance: 1
@@ -234,7 +235,7 @@ MonoBehaviour:
   - Water
   - City
   - Tree
-  maxDepth: 3
+  attackPower: 5
 --- !u!1 &6067285355720245643
 GameObject:
   m_ObjectHideFlags: 0
