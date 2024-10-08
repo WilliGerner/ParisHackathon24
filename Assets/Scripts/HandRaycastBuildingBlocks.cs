@@ -44,6 +44,13 @@ public class HandRaycastBuildingBlocks : MonoBehaviour
                         // Call the PlaceTree method on the VoxelCube Singleton
                         VoxelCube.Instance.PlaceTree(hit.point, hit.normal, directionFromCore);
                     }
+
+                    if (hit.collider.gameObject.tag == "Metroite")
+                    {
+                        Debug.Log("Hit Metroit");
+
+                      //  DestroyImmediate(hit.collider.gameObject);
+                    }
                 }
                 else
                 {

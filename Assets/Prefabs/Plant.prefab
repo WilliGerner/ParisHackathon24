@@ -118,6 +118,8 @@ GameObject:
   - component: {fileID: 2653106897683389417}
   - component: {fileID: 9005474700262136825}
   - component: {fileID: 7582838781359471205}
+  - component: {fileID: 4239612989922505394}
+  - component: {fileID: 3359970081347055860}
   m_Layer: 0
   m_Name: Plant
   m_TagString: Untagged
@@ -236,6 +238,40 @@ MonoBehaviour:
   - City
   - Tree
   attackPower: 5
+--- !u!114 &4239612989922505394
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3073806554339267453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1552182283, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SortKey: 1785258519
+  ObjectInterest: 1
+  Flags: 524289
+  NestedObjects: []
+  NetworkedBehaviours:
+  - {fileID: 3359970081347055860}
+--- !u!114 &3359970081347055860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3073806554339267453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 158639473, guid: e725a070cec140c4caffb81624c8c787, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SyncScale: 0
+  SyncParent: 0
+  _autoAOIOverride: 1
+  DisableSharedModeInterpolation: 1
 --- !u!1 &6067285355720245643
 GameObject:
   m_ObjectHideFlags: 0
