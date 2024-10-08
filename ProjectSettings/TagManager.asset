@@ -18,7 +18,6 @@ TagManager:
   - LocoText
   - SamplesInfoPanel
   - Meteor
-  - Metroite
   layers:
   - Default
   - TransparentFX

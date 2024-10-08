@@ -33,11 +33,11 @@ public class HandRaycastBuildingBlocks : MonoBehaviour
                 RaycastHit hit;
                 if (Physics.Raycast(ray, out hit, rayDistance, hitLayers))
                 {
-                    //Debug.Log("Getroffenes Objekt: " + hit.collider.gameObject.name);
+                    Debug.Log("Getroffenes Objekt: " + hit.collider.gameObject.name);
 
                     if (hit.collider.gameObject.tag == "Meteor")
                     {
-                        DestroyImmediate(hit.collider.gameObject);
+                        DestroyImmediate(hit.collider.gameObject.transform.parent.gameObject);
                     }
 
                         // Check if the hit object is a voxel

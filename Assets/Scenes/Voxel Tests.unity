@@ -2099,7 +2099,6 @@ GameObject:
   - component: {fileID: 178217610}
   - component: {fileID: 178217612}
   - component: {fileID: 178217611}
-  - component: {fileID: 178217613}
   m_Layer: 0
   m_Name: r_handMeshNode
   m_TagString: Untagged
@@ -2212,27 +2211,6 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.08462605, y: -0.018837288, z: 0.013709333}
     m_Extent: {x: 0.10698363, y: 0.05242701, z: 0.07775}
   m_DirtyAABB: 0
---- !u!65 &178217613
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 178217609}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.21396726, y: 0.10485402, z: 0.1555}
-  m_Center: {x: 0.08462605, y: -0.018837288, z: 0.013709333}
 --- !u!1 &192063725
 GameObject:
   m_ObjectHideFlags: 0
